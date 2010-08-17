@@ -1,5 +1,3 @@
-#main wiki for engage-cs.
-
 = Introduction =
 
 Engage-CS is a collection of community supported frameworks designed to make computer science education more engaging. These frameworks can be used by computer science faculty to create interesting and engaging assignments in a variety of topics in computer science.
