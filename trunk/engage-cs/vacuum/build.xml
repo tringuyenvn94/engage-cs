@@ -4,7 +4,7 @@
 	<property name="build" value="build" />
 	<property name="dist" value="dist" />
 	<property name="api" value="docs" />
-	<property name="version" value="3.0" />
+	<property name="version" value="3.1" />
 	<property name="jess" value="../Jess61p4" />
 	<property name="soar" value="soarlib" />	
 
