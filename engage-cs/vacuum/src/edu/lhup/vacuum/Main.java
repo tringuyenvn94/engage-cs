@@ -13,7 +13,7 @@ public class Main extends JFrame implements Observer, ActionListener
 
 	public static JFrame MAIN_WIN;
 
-	private static final String TITLE = "Agent Enviroment (v 3.0)";
+	private static final String TITLE = "Agent Enviroment (v 3.1)";
 
 	private final JMenu m_file = new JMenu("File");
 	private final JMenu m_options = new JMenu("Options");
