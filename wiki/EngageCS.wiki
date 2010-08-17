@@ -5,4 +5,4 @@ Engage-CS is a collection of community supported frameworks designed to make com
 
 For general discussion about the Engage-CS project, please free to comment here.  If your comment is related to a specific project, please use one of the following project specific wikis:
 
-* [Vaccum]
+* [VaccumCleaner]
