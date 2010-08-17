@@ -1,0 +1,70 @@
+<project name="vacuum" default="runForJavaOnly" basedir=".">
+
+	<property name="src" value="src" />
+	<property name="build" value="build" />
+	<property name="dist" value="dist" />
+	<property name="api" value="docs" />
+	<property name="version" value="3.0" />
+	<property name="jess" value="../Jess61p4" />
+	<property name="soar" value="soarlib" />	
+
+	<target name="init">
+		<mkdir dir="${build}" />
+		<mkdir dir="${dist}" />
+		<mkdir dir="${api}" />
+	</target>
+
+	<target name="compileWithJess" depends="init">
+		<javac srcdir="${src}" destdir="${build}" debug="on"
+			classpath="${src};${jess}/jess.jar" />
+	</target>
+
+	<target name="compileWithSoar" depends="init">
+		<javac srcdir="${src}" destdir="${build}" debug="on"
+			classpath="${src};${soar}/sml.jar" />
+	</target>
+
+	<target name="compileForJavaOnly" depends="init">
+		<javac destdir="${build}" debug="on">
+			<src path="${src}"/>
+			<exclude name="edu/lhup/vacuum/jess/**"/>
+			<exclude name="edu/lhup/vacuum/soar/**"/>
+		</javac>
+	</target>
+
+	<target name="runForJavaOnly" depends="compileForJavaOnly">
+		<java classname="edu.lhup.vacuum.Main" fork="true">
+			<classpath>
+				<pathelement path="${build}"/> 
+			</classpath>
+		</java>
+	</target>
+	
+	<target name="compileForAll" depends="init">
+		<javac srcdir="${src}" destdir="${build}" debug="on"
+			classpath="${src};${soar}/sml.jar;${jess}/jess.jar" />
+	</target>
+	
+	<target name="dist">
+		<copy file="vacuum.gif" tofile="${build}/vacuum.gif"/>
+ 
+		<jar jarfile="${dist}/vacuum_${version}.jar" basedir="${build}" manifest="manifest.mf">
+		</jar>
+
+		<javadoc packagenames="edu.lhup.*" sourcepath="${src}"
+			destdir="${api}" author="true" version="true" classpath="${src};${jess}/jess.jar;${soar}/sml.jar"
+			failonerror="false" package="true"
+			link="http://download.oracle.com/docs/cd/E17409_01/javase/6/docs/api/" windowtitle="Vacuum Cleaner World - Version ${version}" />
+
+		<zip destfile="${dist}/vacuum_${version}.zip" basedir="."
+			excludes="vacuum.CS_/**, build/**, dist/vacuum_${version}.zip" />
+	</target>
+
+	<target name="clean">
+		<delete dir="${build}" />
+		<delete dir="${dist}" />
+		<delete dir="${api}" />
+	</target>
+
+</project>
+
