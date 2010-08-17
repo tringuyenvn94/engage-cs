@@ -1,0 +1,11 @@
+#main wiki for engage-cs.
+
+= Introduction =
+
+Engage-CS is a collection of community supported frameworks designed to make computer science education more engaging. These frameworks can be used by computer science faculty to create interesting and engaging assignments in a variety of topics in computer science.
+
+= Current Projects =
+
+== Vacuum Cleaner Environment ==
+
+The Vacuum Cleaner Environment is a more complicated version of an environment introduced by Russell and Norvig in Artificial Intelligence: A Modern Approach (2003) to explain intelligent agents and agent environments.  The purpose of this environment is to provide an engaging atmosphere for learning various topics in computer science, such as procedural and declarative programming.  Using this tool, students can create agents using Java, Jess (jessrules.com), or Soar (sitemaker.umich.edu/soar), and watch them interact.
