@@ -37,36 +37,22 @@ public class ConsolePlayer implements IPlayer
 	 * 
 	 * @param board the {@link IBoard} object that this player will make a move
 	 * on.
-	 *
-	 * @throws TurnException if the user enters an invalid move on the 
-	 * command line.
+	 * 
+	 * @return an {@link IMove object} representation of the move.
+	 * 
+	 * @throws StateException if the player attempts to push an invalid
+	 * move onto the games stack.
 	 */
-	public void takeTurn(IBoard board) throws TurnException
+	public IMove takeTurn(IBoard board) throws StateException
 	{
-		boolean bValidMove = true;
-		do
+		IMove move = null;
+		Scanner scanner = new Scanner(System.in);
+		String in = scanner.nextLine();
+		if (in != null)
 		{
-			bValidMove = true;
-			try
-			{
-				BufferedReader read = 
-					new BufferedReader(new InputStreamReader(System.in));
-				String in = read.readLine();
-				if (in != null)
-				{
-					board.pushMove(in);
-				}
-			}
-			catch (IOException e)
-			{
-				throw new TurnException("IOError whlie taking turn", e);
-			}
-			catch (StateException e)
-			{
-				bValidMove = false;
-				System.out.println(e.getMessage());
-			}
-		} while (!bValidMove);
+			move = board.pushMove(in);
+		}
+		return move;
 	}
 
 	public String toString()

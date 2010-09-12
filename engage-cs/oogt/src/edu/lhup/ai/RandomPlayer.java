@@ -36,25 +36,22 @@ public class RandomPlayer implements IPlayer
 	 * 
 	 * @param board the {@link IBoard} object that this player will make a move
 	 * on.
-	 *
-	 * @throws TurnException if for some strange reason the selected move
+	 * 
+	 * @return the {@link IMove move} taken by the player.
+	 * 
+	 * @throws StateException if for some strange reason the selected move
 	 * turns out not to be legal.
 	 */
-	public void takeTurn(IBoard board) throws TurnException
+	public IMove takeTurn(IBoard board) throws StateException
 	{
 		LinkedList moves = new LinkedList();
 		board.moves(moves);
 
 		int i = m_random.nextInt(moves.size());
 
-		try
-		{
-			board.pushMove((IMove)moves.get(i));
-		}
-		catch (StateException e)
-		{
-			throw new TurnException("Error whlie taking turn", e);
-		}
+		board.pushMove((IMove)moves.get(i));
+		
+		return (IMove)moves.get(i);
 	}
 
 	public String toString()

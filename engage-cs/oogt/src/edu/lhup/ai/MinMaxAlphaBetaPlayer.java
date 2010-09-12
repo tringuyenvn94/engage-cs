@@ -60,68 +60,65 @@ public class MinMaxAlphaBetaPlayer implements IPlayer
 	 * 
 	 * @param board the {@link IBoard} object that this player will make a move
 	 * on.
-	 *
-	 * @throws TurnException if the player attemts to push an invalid
+	 * 
+	 * @return the {@link IMove move} taken by the player.
+	 * 
+	 * @throws StateException if the player attempts to push an invalid
 	 * move onto the games stack.
 	 */
-	public void takeTurn(IBoard board) throws TurnException
+	public IMove takeTurn(IBoard board) throws StateException
 	{
 		Logger logger = Logger.getLogger("edu.lhup.ai.MinMaxAlphaBetaPlayer");
 		logger.entering("edu.lhup.ai.MinMaxAlphaBetaPlayer", "takeTurn", 
 						"\n" + board.toString());
 		long start = System.currentTimeMillis();
 		
-		try
-		{
-			int bestRating = Integer.MIN_VALUE;
-			IMove bestMove = null;
-			List moves = new LinkedList();
-			board.moves(moves);
-			logger.finest("Testing " + moves.size() + " moves");
+		int bestRating = Integer.MIN_VALUE;
+		IMove bestMove = null;
+		List moves = new LinkedList();
+		board.moves(moves);
+		logger.finest("Testing " + moves.size() + " moves");
 
-			for (int i = 0; i < moves.size(); i++)
+		for (int i = 0; i < moves.size(); i++)
+		{
+			m_totalMoves++;
+
+			IMove move = (IMove)moves.get(i);
+			logger.finest("Pushing move " + move);
+			board.pushMove(move);
+			int currentRating = 
+				getRating(board, 0, Integer.MIN_VALUE, Integer.MAX_VALUE);
+			logger.finest("Rating for move " + 
+						  move + " is " + currentRating);
+			logger.finest("Poping move " + move);
+			board.popMove();
+			logger.finest("Best rating so far is " + bestRating);
+			if (currentRating > bestRating)
 			{
-				m_totalMoves++;
-
-				IMove move = (IMove)moves.get(i);
-				logger.finest("Pushing move " + move);
-				board.pushMove(move);
-				int currentRating = 
-					getRating(board, 0, Integer.MIN_VALUE, Integer.MAX_VALUE);
-				logger.finest("Rating for move " + 
-							  move + " is " + currentRating);
-				logger.finest("Poping move " + move);
-				board.popMove();
-				logger.finest("Best rating so far is " + bestRating);
-				if (currentRating > bestRating)
-				{
-					bestMove = move;
-					bestRating = currentRating;
-					logger.finest("Better rating found, new best move is " + 
-								 bestMove);
-				}
+				bestMove = move;
+				bestRating = currentRating;
+				logger.finest("Better rating found, new best move is " + 
+							 bestMove);
 			}
-			logger.finest("Best move found, board is\n" + board);
-			logger.finest("Best move is " + bestMove);
-			board.pushMove(bestMove);
-
-			long stop = System.currentTimeMillis();
-			String totalMins = m_format.format(((stop-start)/1000.0/60.0));
-
-			logger.fine("MIN/MAX Search Statistics: ");
-			logger.fine("\t" + m_totalMoves + " moves examined");
-			logger.fine("\t" + (m_deepestLevel+1) + " levels examined");
-			logger.fine("\t" + "Search time: " + totalMins + " minutes");
-			m_totalMoves = 0;
-			m_deepestLevel = 0;
-
-			logger.exiting("edu.lhup.ai.MinMaxAlphaBetaPlayer", "takeTurn", 
-						   "\n" + board.toString());
 		}
-		catch (StateException e)
-		{
-			throw new TurnException("Error whlie taking turn", e);
-		}
+		logger.finest("Best move found, board is\n" + board);
+		logger.finest("Best move is " + bestMove);
+		board.pushMove(bestMove);
+
+		long stop = System.currentTimeMillis();
+		String totalMins = m_format.format(((stop-start)/1000.0/60.0));
+
+		logger.fine("MIN/MAX Search Statistics: ");
+		logger.fine("\t" + m_totalMoves + " moves examined");
+		logger.fine("\t" + (m_deepestLevel+1) + " levels examined");
+		logger.fine("\t" + "Search time: " + totalMins + " minutes");
+		m_totalMoves = 0;
+		m_deepestLevel = 0;
+
+		logger.exiting("edu.lhup.ai.MinMaxAlphaBetaPlayer", "takeTurn", 
+					   "\n" + board.toString());
+		
+		return bestMove;
 	}
 
 	protected boolean cutoff(IBoard board, int iLevel)
