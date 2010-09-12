@@ -1,8 +1,9 @@
 <game>
 	<gameFactory>
 		<boardClass>edu.lhup.ai.tictactoe.Board</boardClass>
+		<interfaceClass>edu.lhup.ai.tictactoe.TicTacToeGUIInterface</interfaceClass>		
 		<player>
-			<playerClass>edu.lhup.ai.ConsolePlayer</playerClass>
+			<playerClass>edu.lhup.ai.tictactoe.GUIPlayer</playerClass>
 		</player>
 		<player>
 			<playerClass>edu.lhup.ai.MinMaxAlphaBetaPlayer</playerClass>

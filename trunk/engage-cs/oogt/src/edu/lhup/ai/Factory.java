@@ -71,6 +71,19 @@ public class Factory implements IFactory
 		return board;
 	}
 	
+	public IGameInterface getGameInterface(String configFile) throws StateException
+	{
+		Logger logger = Logger.getLogger("edu.lhup.ai.tictactoe.Factory");
+		logger.entering("edu.lhup.ai.tictactoe.Factory", "getGameInterface", 
+						configFile);
+
+		Document doc = parseXML(configFile);
+
+		Node root = doc.getDocumentElement();
+		String strBoard = getText(findChild(root, "interfaceClass"));
+		return (IGameInterface)createInstance(strBoard);
+	}	
+	
 	private IPlayer createPlayer(Node playerNode) throws StateException
 	{
 		Logger logger = Logger.getLogger("edu.lhup.ai.tictactoe.Factory");

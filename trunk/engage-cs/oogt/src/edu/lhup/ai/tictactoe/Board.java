@@ -1,6 +1,7 @@
 package edu.lhup.ai.tictactoe;
 
 import edu.lhup.ai.*;
+
 import java.util.*;
 
 /**
@@ -125,10 +126,13 @@ public class Board implements IBoard
 	 *
 	 * @param strMove the {@link IMove move} that will be added to the stack.
 	 *
+	 * @return an {@link IMove object} representation of the move.
+	 *
 	 * @throws StateException if the specified move is illegal.
 	 */
-	public void pushMove(String strMove) throws StateException
+	public IMove pushMove(String strMove) throws StateException
 	{
+		IMove move = null;
 		try
 		{
 			StringTokenizer tokenizer = new StringTokenizer(strMove, ",");
@@ -139,7 +143,7 @@ public class Board implements IBoard
 			IPiece piece = (lastMove != null && 
 						    lastMove.getPiece() == xPiece()) ? oPiece() : xPiece();
 
-			IMove move = getMove(piece, 
+			move = getMove(piece, 
 						 		 Integer.parseInt(row), 
 						 		 Integer.parseInt(col));
 
@@ -157,6 +161,8 @@ public class Board implements IBoard
 						 + strMove + 
 						 "), please use the following format: row,col");
 		}
+		
+		return move;
 	}
 
 	/**
@@ -255,14 +261,6 @@ public class Board implements IBoard
 		emptyTheArray();
 		m_state = XTURN;
 		m_moveStack.clear();
-
-		//juggle who goes first...
-		if (m_random.nextInt(2) == 0)
-		{
-			IPlayer temp = m_players[0];
-			m_players[0] = m_players[1];
-			m_players[1] = temp;
-		}
 	}
 
 	public Iterator moveIterator()

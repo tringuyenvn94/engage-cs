@@ -28,12 +28,10 @@ class PlayGame
 	 *
 	 * @throws IOException if the configuration file cannot be found.
 	 * @throws StateException if the configuration file specifies an invalid
-	 * game or players.
-	 * @throws TurnException if an invalid turn is made by either of the 
-	 * players	
+	 * game or players or an invalid turn is made by either of the players
 	 */
 	public static void main(String[] args) 
-		throws StateException, IOException, TurnException
+		throws StateException, IOException, StateException
 	{
 		if (args.length != 1)
 		{
@@ -43,44 +41,9 @@ class PlayGame
 
 		IFactory factory = new Factory();
 		IBoard board = factory.getBoardInstance(args[0]);
-		System.out.println("Get ready to play " + 
-						   board.getShortDescription() + "!\n");
-		System.out.println("The players are: ");
-		IPlayer[] players = board.getPlayers();
-		for (int i = 0; i < players.length; i++)
-		{
-			System.out.println((i+1) + ") " + players[i].getDescription());
-		}
+		IGameInterface gameInterface = factory.getGameInterface(args[0]);
 		
-		boolean bContinue = true;
-		while (bContinue)
-		{
-			board.resetState();
-			System.out.println("\nStarting Board:\n" + board);
-			
-			for (Iterator i = board.playerIterator(); i.hasNext(); )
-			{
-				IPlayer player = (IPlayer)i.next();
-				System.out.println(player + ": ");
-				player.takeTurn(board);
-				System.out.println("\n" + board);
-			}
-			
-			if (board.getWinner() != null)
-			{
-				System.out.println("Winner: " + 
-								   board.getWinner().getDescription()); 
-			}			
-			else			
-			{				
-				System.out.println("Tie!");
-			}
-			
-			System.out.println("Play again? (Y/N)");
-			BufferedReader read =
-					new BufferedReader(new InputStreamReader(System.in));
-			String s = read.readLine().toUpperCase();
-			bContinue = (s != null && s.equals("Y"));
-		}
+		gameInterface.init(board);
+		gameInterface.playGame();
 	}
 }

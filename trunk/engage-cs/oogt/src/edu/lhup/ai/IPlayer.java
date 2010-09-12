@@ -47,8 +47,10 @@ public interface IPlayer
 	 * @param board the {@link IBoard} object that this player will make a move
 	 * on.
 	 *
-	 * @throws TurnException if the player attemts to push an invalid
+	 * @return the {@link IMove move} taken by the player.
+	 *
+	 * @throws StateException if the player attempts to push an invalid
 	 * move onto the games stack.
 	 */
-	public void takeTurn(IBoard board) throws TurnException;
+	public IMove takeTurn(IBoard board) throws StateException;
 }

@@ -26,10 +26,12 @@ public interface IBoard
 	 * @param strMove a string representation of a move.  A move is created
 	 * based on this string, and that move will be added to the stack.
 	 *
+	 * @return an {@link IMove object} representation of the move.
+	 *
 	 * @throws StateException if the specified move string could not be 
 	 * translated into an {@link IMove} object, or the move is illegal.
 	 */
-	public void pushMove(String strMove) throws StateException;
+	public IMove pushMove(String strMove) throws StateException;
 
 	/**
 	 * Adds the specified {@link IMove move} to this board's stack.
