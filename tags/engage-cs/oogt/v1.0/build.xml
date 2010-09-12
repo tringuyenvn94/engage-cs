@@ -1,0 +1,69 @@
+<project name="AI" default="dist" basedir=".">
+
+  <!-- set global properties for this build -->
+  <property name="junit" value="/development/junit3.8.1"/>
+  <property name="src" value="src"/>
+  <property name="build" value="build"/>
+  <property name="dist"  value="dist"/>
+  <property name="api"  value="docs"/>
+
+  <target name="init">
+    <!-- Create the build directory structure used by compile -->
+    <mkdir dir="${build}"/>
+  </target>
+
+  <target name="compile" depends="init">
+    <!-- Compile the java code from ${src} into ${build} -->
+    <javac srcdir="${src}" 
+    	   destdir="${build}" 
+    	   debug="on" 
+    	   classpath=".;${src};${junit}/junit.jar" />
+  </target>
+
+  <target name="dist" depends="compile">
+    <!-- Create the distribution directory -->
+    <mkdir dir="${dist}"/>
+
+    <!-- Put classes in ${build} into the ai.jar file -->
+    <jar jarfile="${dist}/ai.jar" basedir="${build}"/>
+
+  </target>
+
+  <!-- Build the Javadocs-->
+  <target name="docs">
+    <mkdir dir="${api}"/>
+	<javadoc packagenames="edu.lhup.*"
+	         sourcepath="${src}"
+	         destdir="${api}"
+	         author="true"
+			 failonerror="false"
+			 package="true"
+  	  	     classpath="${dist}/ai.jar;${junit}/junit.jar;${junit}"
+			 link="file:C:\Development\j2sdk1.4.0\docs\api\"
+	         windowtitle="Object-Oriented Game Playing Framework"/>
+  </target>
+
+  <target name="clean">
+    <delete dir="${build}"/>
+    <delete dir="${dist}"/>
+    <delete dir="${docs}"/>
+  </target>				   
+
+  <target name="test" depends="dist">
+	  <java jvm="java" 
+	  	    classname="junit.swingui.TestRunner" 
+	  	    fork="yes" 
+	  	    classpath="${dist}/ai.jar;${junit}/junit.jar;${junit}">
+		<jvmarg value="-Djava.util.logging.config.file=logging.properties"/>
+	  	<arg value="edu.lhup.ai.tictactoe.TestSuite"/>
+	  </java>
+  </target>
+
+  <target name="run" depends="dist">
+	<exec dir="." executable="start">
+		<arg line="cmd /K java -Djava.util.logging.config.file=logging.properties -cp ./dist/ai.jar edu.lhup.ai.PlayGame PlayGameConfig.xml"/>
+	</exec>
+  </target>
+
+</project>
+
