@@ -1,0 +1,467 @@
+<head> 
+<title>
+	The Development of a Game Playing Framework 
+	Using Interface-based Programming
+</title> 
+
+<meta name="keywords" 
+	  content="game theory, game playing, interface-based, programming, Java, object-oriented, minimax, alpha-beta pruning, design patterns, artificial intelligence">
+<meta name="description" 
+	  content="This article descibes the object-oriented, interface-based, design and implementation of a game playing framwork in Java.">
+
+<style>
+table 
+{
+    background-color: #FFFAF0;
+	width=100%;
+	border=solid;
+	border-color=black;
+	border-width=1
+}
+</style>
+
+</head> 
+
+<body> 
+<center><h1>The Development of a Game Playing Framework 
+			Using Interface-based Programming
+</h1></center>
+<center>by <I> <a href="#authorbio">Mark A. Cohen</a></I></center>
+
+<p>
+<h2>Introduction</h2>
+
+<p>
+The Java programming language contains several object-oriented features that make it possible to build application frameworks based on interfaces. Interfaces make it easy to "plug-in" various implementations without making changes to the core of the framework.  The following article demonstrates how to take advantage of Java interfaces by designing and implementing an application framework that supports game playing. 
+
+<p>
+<h2>Discovering the Interfaces</h2>
+
+<p> 
+Perhaps the best object-oriented design advice is to "Program to an interface, not an implementation" [<a href="#gamma">2</a>].  When using interfaces, the actual implementation is not a factor in the design.  As a result, the finished application has a much better chance of surviving the implementation changes it will inevitably be asked to support. 
+
+<p>
+An interface can be defined as a contract that outlines the terms of use for a class of objects.  When a class implements an interface, the class is agreeing to the contract outlined by the interface.  In other words, the class is agreeing to provide the logic for all the methods listed in the interface.  The single most important attribute of an interface is its implementation independence.  The contract enforced by an interface does not make any assumptions about how the methods are implemented; the implementation strategy is left to the implementing class.  By enforcing what a class of objects must do, without placing restrictions on <i>how</i> it is done, interfaces play a key role in making the behavior of objects more flexible.
+
+<p> 
+The first step in the design process is discovering the necessary interfaces.  A good way to start is to develop a rough sketch of the main program.  After all, the main program should not change whenever an implementation is revised.  A sketch of the main program for the game playing framework is shown in <a href="#list1">Listing 1</a>. 
+
+<p>
+<a name="#list1"/>
+<table>
+<tr><td>
+<br>
+<pre>
+	IFactory factory = new Factory();
+	IBoard board = factory.getBoardInstance(args[0]);
+
+	boolean bContinue = true;
+	while (bContinue)
+	{
+		board.resetState();
+		System.out.println("\nStarting Board:\n" + board);
+		
+		for (Iterator i = board.playerIterator(); i.hasNext(); )
+		{
+			IPlayer player = (IPlayer)i.next();
+			System.out.println(player + ": ");
+			player.takeTurn(board);
+			System.out.println("\n" + board);
+		}
+		
+		if (board.getWinner() != null)
+			System.out.println("Winner: " + board.getWinner() + "!"); 
+		else
+			System.out.println("Tie!");
+
+		bContinue = playAgain();
+	}
+</pre>
+</td>
+</tr>
+<tr><td align="center"><b>Listing 1:</b> A rough sketch of the main program.</td></tr>
+</table>
+
+<p>
+The code in <a href="#list1">Listing 1</a> can play many different games, using a variety of strategies.  However, the implementation details, such as the type of game, and the players that are playing, are not obvious from looking at the code.  Hiding the implementation details was accomplished by representing the game, and the players involved, on an abstract level using interfaces.
+
+<p>
+In any object-oriented program, the only time a specific type needs to be revealed is during instantiation [<a href="#bloch">1</a>].  This property is exploited in <a href="#list1">Listing 1</a> by representing the current game using the <code>IBoard</code> interface.  Observe how the type of game is "hidden" behind this interface and is determined by a "factory" responsible for creating the game.  The factory is represented using the <code>IFactory</code> interface shown in <a href="#list2">Listing 2</a>.  As will be shown later, this is an example of the <b>builder design pattern</b> [<a href="#gamma">2</a>] because the factory constructs the board object out of other objects.  The use of <b>creational design patterns</b> [<a href="#gamma">2</a>] is a key component to interface-based design because they make it so easy to change the concrete components used by an application.
+
+<p>
+<a name="#list2"/>
+<table>
+<tr><td>
+<br>
+<pre>
+public interface IFactory
+{
+	public IBoard getBoardInstance(String strConfigFile);
+}
+</pre>
+</td>
+</tr>
+<tr><td align="center"><b>Listing 2:</b> The IFactory interface.</td></tr>
+</table>
+
+<p>
+In addition to creating an abstraction for the type of game, it is also important to create an interface to represent the players.  The interface will support the need to easily change a player's strategy.  The type of players are hidden from the main program by way of the <code>IPlayer</code> interface.  Instead of being directly involved in the creation of the players, the main program consults the board for the players, and the associated turn sequence.  The players and the turn sequence is abstracted by taking advantage of the <b>iterator design pattern</b>.  Iterators allow a sequence of objects to be enumerated without any knowledge of how these objects are contained, or the concrete type of objects being enumerated [<a href="#gamma">2</a>].  For example, the board object in <a href="#list1">Listing 1</a> provides the main program with a player iterator that makes it possible to enumerate the set of players.  The responsibilities and behavior of any player that is capable of playing a game are summarized in the <code>IPlayer</code> interface (<a href="#list3">Listing 3</a>).
+
+<p>
+<a name="#list3"/>
+<table>
+<tr><td>
+<br>
+<pre>
+public interface IPlayer
+{
+	public String getDescription();
+	public String getShortDescription();
+	public void takeTurn(IBoard board);
+	public void setEvaluator(IEvaluator evaluator);
+}
+</pre>
+</td>
+</tr>
+<tr><td align="center"><b>Listing 3:</b> The IPlayer interface.</td></tr>
+</table>
+
+<p>
+The two most important methods in the <code>IPlayer</code> interface are <code>takeTurn()</code> and <code>setEvaluator()</code>.  The <code>takeTurn()</code> method asks a player to take a turn using the specified board.  The player's <code>setEvaluator()</code> method accepts any object that supports the <code>IEvaluator</code> interface (<a href="#list4">Listing 4</a>).  The <code>setEvaluator()</code> makes it possible to configure any player with a specific, and more effective, strategy for evaluating the current state of the game board.  The ability to change evaluation strategies is an example of the <b>strategy design pattern</b> [<a href="#gamma">2</a>] and is another example of how interfaces can increase flexibility.  
+
+<p>
+<a name="#list4"/>
+<table>
+<tr><td>
+<br>
+<p>
+<pre>
+public interface IEvaluator
+{
+	public int evaluate(IBoard board, IPlayer player);
+}
+</pre>
+</td>
+</tr>
+<tr><td align="center"><b>Listing 4:</b> The IEvaluator interface.</td></tr>
+</table>
+
+<p>
+Up to this point, the use of interfaces has helped create a main program that has no dependencies on the game it is playing, the type of players that are playing, or the strategies used by these players.  For a better understanding of how this is possible, it will help to examine the <code>IBoard</code> interface (<a href="#list5">Listing 5</a>).
+
+<p>
+<a name="#list5"/>
+<table>
+<tr><td>
+<br>
+<pre>
+public interface IBoard
+{
+	public void pushMove(IMove move);
+	public IMove peekMove();
+	public IMove popMove();
+
+	public void setPlayers(IPlayer[] players);
+	public Iterator playerIterator();
+
+	public void moves(Collection col);
+	public IPlayer getWinner();
+	public void resetState();
+}
+</pre>
+</td>
+</tr>
+<tr><td align="center"><b>Listing 5:</b> The IBoard interface.</td></tr>
+</table>
+
+<p>
+As shown in <a href="#list5">Listing 5</a>, all boards contain a stack of moves.  A turn can be taken by pushing a move onto this stack using the <code>pushMove()</code> method, and the most recent move can be obtained, or undone, using the <code>peekMove()</code> and <code>popMove()</code> methods.  In addition to moves, each board must know the players that are permitted to make moves, and the order in which these players can take their turn.  The <code>IBoard</code> interface provides this functionality with the <code>setPlayers()</code> and <code>playerIterator()</code> methods.  When the game has ended, the <code>getWinner()</code> method can be used to obtain a reference to the winner of the game; <code>null</code> will be returned if the game ended in a tie.  All boards must also provide a collection of the currently available moves using the <code>moves()</code> method.  Finally, the <code>resetState()</code> method can be invoked to prepare the board for a new game.  Without making any assumptions about a specific game type, the <code>IBoard</code> interface provides a working abstraction for many different types of games.
+
+<p>
+Since different games support different types of moves, the <code>IMove</code> interface is used to define these move types.  In addition, an interface named <code>IPiece</code> is needed to represent the pieces associated with a move (<a href="#list6">Listing 6</a>).
+
+<p>
+<a name="#list6"/>
+<table>
+<tr><td>
+<br>
+<pre>
+public interface IMove
+{
+	public IPiece getPiece();
+}
+
+public interface IPiece
+{
+}
+</pre>
+</td>
+</tr>
+<tr><td align="center"><b>Listing 6:</b> The IMove and IPiece interfaces.</td></tr>
+</table>
+
+<p>
+A striking property of the <code>IPiece</code> interface is that it does not contain any methods.  It may seem strange to define an interface without any methods, especially given the fact that most games can be implemented using  pieces that require only the methods provided by Java's common base class: <code>Object</code> [<a href="#api">5</a>].  Although not immediately necessary, <code>IPiece</code> was created in order to keep with the spirit of programming to an interface.  As a variety of games are implemented, this interface may prove to be more useful.  
+
+<p>
+<a href="#fig1">Figure 1</a> summarizes the <code>edu.lhup.ai</code> package, and the interfaces that have been uncovered in order to implement the generic game playing framework.
+
+<p>
+<a name="#fig1"/>
+<table>
+<tr><td align="center">
+<img src="ACMJavaMinMax1.jpg" width="279" height="223">
+</td>
+</tr>
+<tr><td align="center"><b>Figure 1:</b> The edu.lhup.ai package.</td></tr>
+</table>
+
+<p>
+<h2>Building Generic Players</h2>
+
+<p>
+Using the interfaces designed earlier, it is possible to implement players capable of playing a game with absolutely no detailed knowledge of the game they are playing.  The players can play any game using only the abstract view provided by the <code>IBoard</code> interface.  The two players that will be implemented here are the <code>RandomPlayer</code>, and the <code>MinMaxAplhaBetaPlayer</code>.
+
+<p>
+The <code>RandomPlayer</code> is capable of playing any game by selecting moves randomly.  Naturally, this particular participant will not perform well at most games.  However, it is capable of playing any game, and looking at its implementation does start to demonstrate the power of the current interface design.  Since the <code>RandomPlayer</code> does not use any real strategy in order to choose its moves, it does not require an evaluator.  As a result, the only method that needs to be implemented is <code>takeTurn()</code>.
+
+<p>
+The <code>RandomPlayer</code> works with the current game using the <code>IBoard</code> interface (<a href="#list7">Listing 7</a>).  The use of the <code>IBoard</code> interface makes it possible to query the game for all of the possible moves.  Once the player has a list of the possible moves, the player randomly selects a move from the available choices, and pushes the move onto the specified game's stack.  No knowledge beyond the abstract representations of the game, and the allowed moves, is required in order to play a game in a random fashion.
+
+<p>
+<a name="#list7"/>
+<table>
+<tr><td>
+<br>
+<pre>
+	public void takeTurn(IBoard board)
+	{
+		LinkedList moves = new LinkedList();
+		board.moves(moves);
+
+		int i = m_random.nextInt(moves.size());
+		board.pushMove((IMove)moves.get(i));
+	}
+</pre>
+</td>
+</tr>
+<tr><td align="center"><b>Listing 7:</b> The takeTurn method for the RandomPlayer.</td></tr>
+</table>
+
+
+<p>
+The random player is interesting but not that useful -- except for randomly testing new games.  Perhaps it would be more useful to create a player that can play with more intelligence, and still have no knowledge of the game it is playing.  To accomplish this, a little background in game theory is required.
+
+<p>
+<h2>Minimax Search and Alpha-Beta Pruning</h2>
+
+<p>
+In order to implement an intelligent player, a more sophisticated algorithm must be used.  One possible solution is the <b>minimax</b> search algorithm.  In its purest form, this algorithm plays the game from the current state to all possible endings by exploring the legal moves at each state.  Upon reaching each end state, an evaluation is made on the quality of the result.  Using this evaluation, each player's move leading up to the end state can be predicted -- assuming that the player will choose a move resulting in a higher evaluation.  Employing this strategy, the best possible sequence of moves can be discovered, and the best next move determined.  Readers that desire a more detailed description of the minimax search algorithm should refer to [<a href="#russell">4</a>].
+
+<p>
+In a perfect world, the minimax search algorithm is very effective because it examines all possible moves in order to find the path that will lead to the best result.  However, few games reside in a perfect world.  The limitations of the basic minimax algorithm lie in the very large search space that must be examined, and most interesting games are interesting because they have such a large search space [<a href="#russell">4</a>].  Fortunately, a minor modification can be made to the basic minimax algorithm that can decrease the number of moves evaluated.  The technique used to prune a minimax search tree is called <b>alpha-beta pruning</b> [<a href="#russell">4</a>].
+
+<p>
+<h2>Implementing the <code>MinMaxAlphaBetaPlayer</code></h2>
+
+<p>
+The <code>MinMaxAlphaBetaPlayer</code> uses a minimax search algorithm, along with alpha-beta pruning, in order to play a game.  The most interesting thing about this implementation is that it does this without any knowledge of the specific game it is playing.  Once again, the simple <code>IBoard</code> interface is all that is needed to implement this more sophisticated game player.
+
+<p>
+The implementation chosen for the <code>MinMaxAlphaBetaPlayer</code> is based on the pseudo code presented in [<a href="#russell">4</a>].  <a href="#list8">Listing 8</a> shows the implementation of the <code>takeTurn()</code> method that performs the minimax search.  This method queries the board for the current list of possible moves.  It then examines each move and assigns it a rating.  The move with the best rating is chosen as the next move.
+
+<p>
+<a name="#list8"/>
+<table>
+<tr><td>
+<br>
+<pre>
+	public void takeTurn(IBoard board)
+	{
+		int bestRating = Integer.MIN_VALUE;
+		IMove bestMove = null;
+		List moves = new LinkedList();
+		board.moves(moves);
+
+		for (int i = 0; i < moves.size(); i++)
+		{
+			IMove move = (IMove)moves.get(i);
+			board.pushMove(move);
+			int currentRating = 
+				getRating(board, 0, Integer.MIN_VALUE, Integer.MAX_VALUE);
+			board.popMove();
+			if (currentRating > bestRating)
+			{
+				bestMove = move;
+				bestRating = currentRating;
+			}
+		}
+		board.pushMove(bestMove);
+	}
+</pre>
+</td>
+</tr>
+<tr><td align="center"><b>Listing 8:</b> The takeTurn method for the MinMaxAlphaBetaPlayer.</td></tr>
+</table>
+
+<p>
+Most of the work done by the <code>MinMaxAlphaBetaPlayer</code> player takes place in the <code>getRating()</code> method.  This method is called by <code>takeTurn()</code>, and recursively searches the tree of moves looking for an end state.  An end state occurs when a cutoff limit is reached, the game ends in a tie, or one of the players wins. The cutoff limit is used for games which contain search spaces that are too large to be searched in their entirety.  Once an end state is found, it is evaluated using the player's evaluator object.
+
+<p>
+The implementation for <code>getRating()</code> is not shown in order to avoid getting bogged down in the details of the algorithm (see the pseudo code presented in [<a href="#russell">4</a>]).  Instead, the reader is asked to focus on the following important points.  First, the <code>takeTurn()</code> and the <code>getRating()</code> methods interact with the game using the <code>IBoard</code> interface.  Using the <code>IBoard</code> interface is what makes it possible for the particular player to play any implementation of <code>IBoard</code>.  Finally, rating each end state is performed by the player's evaluator and makes it possible to inject a problem-specific evaluation into the algorithm.
+
+<p>
+In an effort to keep the player completely general, a default evaluator that does not need game specific information is required.  The default <code>Evaluator</code> class (<a href="#list9">Listing 9</a>) can only evaluate terminal states, and assigns a rating of one for a victory, zero for a tie, and a minus one for states that result in defeat.
+
+<p>
+<a name="#list9"/>
+<table>
+<tr><td>
+<br>
+<pre>
+public class Evaluator implements IEvaluator
+{
+	public int evaluate(IBoard board, IPlayer maxPlayer)
+	{
+		int rating = Integer.MIN_VALUE;
+		if (board.getWinner() == null)
+		{
+			rating = 0;
+		}
+		else if (board.getWinner() == maxPlayer)
+		{
+			rating = 1;
+		}
+		else
+		{
+			rating = -1;
+		}
+		return rating;
+	}
+}
+</pre>
+</td>
+</tr>
+<tr><td align="center"><b>Listing 9:</b> The default Evaluator.</b></td></tr>
+</table>
+
+<p>
+As mentioned earlier, both of these implementations can be altered to create more effective players that take advantage of the details of a specific game.  An actual game needs to be implemented in order to illustrate the creation of such specialized players.
+
+<p>
+<h2>Tic-Tac-Toe</h2>
+
+All of the interfaces and classes introduced reside in the <code>edu.lhup.ai</code> package, and support a variety of games.  To put these classes to work, the game of tic-tac-toe was implemented.
+
+<p>
+In order to implement tic-tac-toe, the <code>IBoard</code>, <code>IMove</code>, and <code>IPiece</code> interfaces must be implemented.  In addition, an iterator must be created that allows the enumeration of the tic-tac-toe players.  These classes have been placed in the <code>edu.lhup.ai.tictactoe</code> package.  
+
+<p>
+Tic-tac-toe requires three different types of pieces: <code>XPiece</code>, <code>OPiece</code>, and <code>EmptyPiece</code>.  In addition, a <code>Move</code> class was created to associate a piece with a board location.  The rules and logic of tic-tac-toe are implemented in the <code>Board</code> class and the <code>PlayerIterator</code> class.  
+
+<p>
+The <code>edu.lhup.ai.tictactoe</code> package also contains a custom <code>Evaluator</code> that demonstrates how the generic <code>MinMaxAlphaBetaPlayer</code> can be improved by taking advantage of the rules of a specific game.  If you recall, a cutoff point was added to the <code>MinMaxAlphaBetaPlayer</code> for the case when, even with alpha-beta pruning, a search takes too long.  However, using a cutoff can lead to something called the <b>horizon problem</b> [<a href="#russell">4</a>].  The horizon problem arises when the cutoff point is reached and the evaluator is asked to evaluate a game state that is not terminal.  As a result, the evaluator must be capable of deciding how good a state is, even if there is currently no winner. Failure by the evaluator to see what is about to happen in the game can lead to a poor evaluation.  Creating a custom evaluator is a good way to alleviate the horizon problem because additional logic can be added that uses knowledge of the game to look for trouble beyond the cutoff.
+
+<p>
+The tic-tac-toe specific evaluator examines terminal and non-terminal game states by judging how close a particular state is from victory or defeat; this can minimize the horizon problem.  Players using this evaluator will be able to play tic-tac-toe much quicker because they can take advantage of a cutoff.  The disadvantage is that players using this evaluator become tic-tac-toe specialists, and can no longer play a variety of different games.
+
+<p>
+Because the focus of this article is on the framework, and how it supports several different types of games, the actual tic-tac-toe classes are not covered in detail.  A complete class diagram of all of the classes in the framework, along with the tic-tac-toe specific classes, is shown in <a href="#fig2">Figure 2</a>.  For the purposes of testing the framework, the code from <a href="#list1">Listing 1</a> was used to create the <code>PlayGame</code> class.
+
+<p>
+<a name="#fig2"/>
+<table>
+<tr><td align="center">
+<img src="ACMJavaMinMax2.jpg" width="600" height="452">
+</td>
+</tr>
+<tr><td align="center"><b>Figure 2:</b> Framework class diagram.</td></tr>
+</table>
+
+<p>
+<h2>Configuring the Framework</h2>
+
+The main program that was sketched earlier -- and has found its way into the <code>PlayGame</code> class -- relies on the <code>Factory</code> class in order to get an instance of the current game board.  The flexibility of the framework can be taken advantage of by placing the name of the actual game created by the <code>Factory</code> in an XML configuration file.  The XML code is parsed using the classes in the <code>javax.xml.parsers</code> package [<a href="#api">5</a>].  The factory builds the game board using the class names located in the configuration file.  Because the creation of the board is rather complex, consisting of building the board using players and evaluators, the builder design pattern was implemented [<a href="#gamma">2</a>].  The creation of classes, and instances of these classes, is accomplished by using Java's support for dynamic class loading [<a href="#gosling">3</a>].
+
+<p>
+An example of a configuration file that results in a game of tic-tac-toe between a <code>RandomPlayer</code> and a <code>MinMaxAlphaBetaPlayer</code> can be found in <a href="#list10">Listing 10</a>.  
+
+<p>
+<a name="#list10"/>
+<table>
+<tr><td>
+<br>
+<pre>
+&lt;game&gt;
+	&lt;gameFactory&gt;
+		&lt;boardClass&gt;edu.lhup.ai.tictactoe.Board&lt;/boardClass&gt;
+		&lt;player&gt;
+			&lt;playerClass>edu.lhup.ai.RandomPlayer&lt;/playerClass&gt;
+		&lt;/player&gt;
+		&lt;player&gt;
+ 		    &lt;playerClass>edu.lhup.ai.MinMaxAlphaBetaPlayer&lt;/playerClass&gt;
+			&lt;cutoff>1000&lt;/cutoff&gt;
+			&lt;evaluator&gt;
+				&lt;evaluatorClass>edu.lhup.ai.Evaluator&lt;/evaluatorClass&gt;
+			&lt;/evaluator&gt;
+		&lt;/player&gt;
+	&lt;/gameFactory&gt;
+&lt;/game&gt;
+</pre>
+</td>
+</tr>
+<tr><td align="center"><b>Listing 10:</b> Tic-tac-toe configuration file.</td></tr>
+</table>
+
+<h2>Educational Uses</h2>
+<p>
+This configuration file makes it possible for new games and new players to be implemented, and plugged into the framework.  Readers are encouraged to download the source code, implement a new game, and see how the default <code>MinMaxAlphaBetaPlayer</code> performs.  It would also be a good exercise to create an even better player by implementing an evaluator that is specific to the new game, and plugging it into the <code>MinMaxAlphaBetaPlayer</code>.
+
+<p>
+Further extending of the framework could also be assigned in an undergraduate course in object-oriented programming or artificial intelligence, and competitions can be setup to assess the effectiveness of the student's work. The combination of game programming and good natured competition is often a strong motivation to undergraduate students, and should be more than enough to inspire lively participation.  Interested students or instructors can obtain a digital copy of all of the source code, along with the Javadocs, at <a href="http://www.lhup.edu/mcohen/oogt">http://www.lhup.edu/mcohen/oogt</a>.
+
+<h2>Conclusion</h2>
+
+<p> The game playing framework described above demonstrates how the generous use of interfaces can lead to a flexible design.  This flexibility is evident in the framework's ability to support many different games using a variety of game playing strategies.  In addition, the framework can be customized to support game specific strategies.  Most importantly, this customization can be done via a configuration file, and imposes minimal impact on the existing code base. Identifying the interfaces required by an application, and then programming to these interfaces, results in an application that happily accepts implementation changes.  Instructors and students alike are encouraged to take advantage of the flexibility of the framework to help with the education of object-oriented programming and game theory.
+
+<p>
+<h2>References</h2>
+<dl compact> 
+	<dt><a name="bloch"><b>1</b></a>
+	<dd>Bloch, Joshua. 2001. 
+	<i>Effective Java.</i>
+    Reading, MA: Addison-Wesley.
+</dl>
+<dl compact> 
+	<dt><a name="gamma"><b>2</b></a>
+	<dd>Gamma, Erich, Richard Helm, Ralph Johnson, and John Vlissides. 1995. 
+	<i>Design Patterns.</i>
+    Reading, MA: Addison-Wesley.
+</dl>
+<dl compact> 
+	<dt><a name="gosling"><b>3</b></a>
+	<dd>Gosling, James, Bill Joy, and Guy L., Jr. Steele. 1996. 
+	<i>The Java Language Specification.</i>
+    Reading, MA: Addison-Wesley.
+</dl>
+<dl compact> 
+	<dt><a name="russell"><b>4</b></a>
+	<dd>Russell, Stuart, and Peter Norvig. 1995. 
+	<i>Artificial Intelligence.</i>
+    Upper Saddle River, NJ: Prentice-Hall.
+</dl>
+<dl compact> 
+	<dt><a name="api"><b>5</b></a>
+	<dd>Sun Microsystems Inc. 2002.
+	<i>Java 2 Platform, Standard Edition, v 1.4.1, API Specification.</i> 
+	<a href="http://java.sun.com/j2se/1.4.1/docs/api/index.html">http://java.sun.com/j2se/1.4.1/docs/api/index.html</a>
+</dl>
+
+
+<p>
+<hr> 
+<p>
+<b><a name="authorbio">Biography</a></b>
+<p>
+<b>Mark Cohen</b> (<a href="mailto:mcohen@lhup.edu">mcohen@lhup.edu</a>) is an instructor in the Business Administration, Computer Science and Information Technology department at Lock Haven University, and a graduate student associated with the Applied Cognitive Science Lab in the School of Information Sciences and Technology at Pennsylvania State University.  His research interests include object-oriented programming and artificial intelligence.  He received a M.S. in Computer Science from Drexel University, a B.S. in Electrical Engineering from Lafayette College, and has over 10 years of experience developing software for the health care and pharmaceutical industries.</body>
+</html>
