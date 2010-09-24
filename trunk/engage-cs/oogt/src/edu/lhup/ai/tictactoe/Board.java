@@ -1,7 +1,6 @@
 package edu.lhup.ai.tictactoe;
 
 import edu.lhup.ai.*;
-
 import java.util.*;
 
 /**
@@ -178,45 +177,13 @@ public class Board implements IBoard
 	public void pushMove(IMove move) throws StateException
 	{
 		Move ticTacToeMove = (Move)move;
-		if ( (m_moveStack.size() == 0) && 
-			 (ticTacToeMove.getPiece() != xPiece()) )
-		{
-			throw new StateException("Illegal move, " + 
-									 "first move must be made by X");
-		}
-
-		if ( (ticTacToeMove.getRow() < 0) || (ticTacToeMove.getRow() > 2) || 
-			 (ticTacToeMove.getCol() < 0) || (ticTacToeMove.getCol() > 2) )
-		{
-			throw new StateException("Illegal move, move is off the board");
-		}
-
-		if (m_moveStack.size() > 0)
-		{
-			Move lastMove = (Move)peekMove();
-			if (lastMove.getPiece() == ticTacToeMove.getPiece())
-			{
-				throw new StateException
-					("Illegal move, same player cannot make two moves " + 
-					 "in a row");
-			}
-		}
-
-		if (m_board[ticTacToeMove.getRow()][ticTacToeMove.getCol()] == 
-			emptyPiece())
-		{
-			m_board[ticTacToeMove.getRow()][ticTacToeMove.getCol()] = 
-				ticTacToeMove.getPiece();
-
-			m_moveStack.addFirst(move);
-
-			updateState(ticTacToeMove);
-		}
-		else
-		{
-			throw new StateException("Illegal move " + move + 
-									 ", the square is already occupied");
-		}
+		
+		// throws an exception if move is illegal... 
+		legalMove(ticTacToeMove);
+		m_board[ticTacToeMove.getRow()][ticTacToeMove.getCol()] = 
+			ticTacToeMove.getPiece();
+		m_moveStack.addFirst(move);
+		updateState(ticTacToeMove);
 	}
 
 	public IMove popMove()
@@ -340,6 +307,42 @@ public class Board implements IBoard
 		return result;
 	}
 
+	public void legalMove(IMove move) throws StateException
+	{
+		Move tttMove = (Move)move;
+
+		if ( (m_moveStack.size() == 0) && 
+				 (tttMove.getPiece() != xPiece()) )
+		{
+			throw new StateException("Illegal move, " + 
+									 "first move must be made by X");
+		}
+
+		if ( (tttMove.getRow() < 0) || (tttMove.getRow() > 2) || 
+			 (tttMove.getCol() < 0) || (tttMove.getCol() > 2) )
+		{
+			throw new StateException("Illegal move, move is off the board");
+		}
+
+		if (m_moveStack.size() > 0)
+		{
+			Move lastMove = (Move)peekMove();
+			if (lastMove.getPiece() == tttMove.getPiece())
+			{
+				throw new StateException
+					("Illegal move, same player cannot make two moves " + 
+					 "in a row");
+			}
+		}
+
+		if (m_board[tttMove.getRow()][tttMove.getCol()] != 
+			emptyPiece())
+		{
+			throw new StateException("Illegal move " + move + 
+									 ", the square is already occupied");
+		}
+	}
+	
 //---------------
 
 	static IPiece emptyPiece()
