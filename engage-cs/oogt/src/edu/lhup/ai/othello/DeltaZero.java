@@ -1,0 +1,23 @@
+package edu.lhup.ai.othello;
+
+public class DeltaZero implements IDelta 
+{
+	private int m_min = Integer.MIN_VALUE;
+	private int m_max = Integer.MAX_VALUE;
+	
+	public DeltaZero(int min, int max)
+	{
+		m_min = min;
+		m_max = max;
+	}
+	
+	public int delta(int i) 
+	{
+		int newI = i;
+		if (newI < m_min || newI > m_max)
+			return LIMIT;
+		else
+			return newI;
+	}
+
+}

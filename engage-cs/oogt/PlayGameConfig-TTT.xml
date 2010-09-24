@@ -1,6 +1,6 @@
 <game>
 	<gameFactory>
-		<boardClass>edu.lhup.ai.othello.Board</boardClass>
+		<boardClass>edu.lhup.ai.tictactoe.Board</boardClass>
 		<interfaceClass>edu.lhup.ai.ConsoleInterface</interfaceClass>		
 		<player>
 			<playerClass>edu.lhup.ai.ConsolePlayer</playerClass>
@@ -9,7 +9,7 @@
 			<playerClass>edu.lhup.ai.MinMaxAlphaBetaPlayer</playerClass>
 			<cutoff>2</cutoff>
 			<evaluator>
-				<evaluatorClass>edu.lhup.ai.othello.Evaluator</evaluatorClass>
+				<evaluatorClass>edu.lhup.ai.tictactoe.Evaluator</evaluatorClass>
 			</evaluator>
 		</player>
 	</gameFactory>

@@ -1,4 +1,4 @@
-package edu.lhup.ai.tictactoe;
+package edu.lhup.ai.othello;
 
 import edu.lhup.ai.*;
 
@@ -7,7 +7,7 @@ import java.util.logging.*;
 
 /**
  * Iterates all of the currently legal moves in a 
- * {@link Board tic-tac-toe game} 
+ * {@link Board othello game} 
  *
  * <p>
  * This software is for educational purposes only.
@@ -37,28 +37,30 @@ class MoveIterator implements Iterator
 
 	private IMove findNextMove(boolean bRetain)
 	{
-		Logger logger = Logger.getLogger("edu.lhup.ai.tictactoe.MoveIterator");
-		logger.entering("edu.lhup.ai.tictactoe.MoveIterator", "findNextMove", 
+		Logger logger = Logger.getLogger("edu.lhup.ai.othello.MoveIterator");
+		logger.entering("edu.lhup.ai.othello.MoveIterator", "findNextMove", 
 					    new Boolean(bRetain) );
 
 		Move nextMove = null;
 
-		if ( (m_board.getState() == Board.XTURN) ||
-		     (m_board.getState() == Board.OTURN) )
+		if ( (m_board.getState() == Board.BTURN) ||
+		     (m_board.getState() == Board.WTURN) )
 		{
-			IPiece nextPiece = Board.xPiece();
+			IPiece nextPiece = Board.bPiece();
 			Move lastMove = (Move)m_board.peekMove();
 
 			if (lastMove != null)
 			{
-				nextPiece = (lastMove.getPiece() == Board.xPiece()) ? 
-					Board.oPiece() : Board.xPiece();
+				nextPiece = (lastMove.getPiece() == Board.bPiece()) ? 
+					Board.wPiece() : Board.bPiece();
 			}
 
 			int iRowTrack = m_iCurRow;
 			int iColTrack = m_iCurCol;
 			boolean bFoundOne = false;
 			IPiece[][] board = m_board.getBoard();
+			
+
 			for (int iRow = iRowTrack; iRow < board.length && !bFoundOne; iRow++)
 			{
 				for (int iCol = iColTrack; 
@@ -72,18 +74,22 @@ class MoveIterator implements Iterator
 					{
 						nextMove = 
 							Board.getMove(nextPiece, iRow, iCol);
+						logger.finer("trying move " + nextMove);
+						logger.finer("on board\n" + m_board.toString());						
 						try
 						{
 							m_board.legalMove(nextMove);
+							logger.finer("move worked");
 							bFoundOne = true;
 						}
 						catch (StateException e)
 						{
+							logger.finer("move failed");
 							nextMove = null;
 						}
 					}
 
-					if (iCol < 2)
+					if (iCol < Board.MAX_DIMENSION-1)
 					{
 						iColTrack = iCol+1;
 					}
@@ -100,7 +106,8 @@ class MoveIterator implements Iterator
 				m_iCurCol = iColTrack;
 			}
 		}
-		logger.exiting("edu.lhup.ai.tictactoe.MoveIterator", "nextMove", 
+
+		logger.exiting("edu.lhup.ai.othello.MoveIterator", "nextMove", 
 					   nextMove);
 		return nextMove;
 	}

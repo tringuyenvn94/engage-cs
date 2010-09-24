@@ -125,4 +125,14 @@ public interface IBoard
 	 * @return a short description of this player.
 	 */
 	public String getShortDescription();
+	
+	/**
+	 * Checks to ensure the proposed move is legal.  If it is not,
+	 * an exception is thrown detailing the error.
+	 * 
+	 * @param move the {@link IMove} that will be tested for legality
+	 * 
+	 * @throws StateException if the specified move is illegal.
+	 */
+	public void legalMove(IMove move) throws StateException;
 }
