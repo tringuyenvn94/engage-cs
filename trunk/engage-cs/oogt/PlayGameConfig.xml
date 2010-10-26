@@ -1,15 +1,15 @@
 <game>
 	<gameFactory>
-		<boardClass>edu.lhup.ai.othello.Board</boardClass>
-		<interfaceClass>edu.lhup.ai.ConsoleInterface</interfaceClass>		
+		<boardClass>Test.MyOthelloBoard</boardClass>
+		<interfaceClass>edu.lhup.ai.othello.OthelloGUIInterface</interfaceClass>		
 		<player>
-			<playerClass>edu.lhup.ai.ConsolePlayer</playerClass>
+			<playerClass>edu.lhup.ai.othello.GUIPlayer</playerClass>
 		</player>
 		<player>
 			<playerClass>edu.lhup.ai.MinMaxAlphaBetaPlayer</playerClass>
-			<cutoff>2</cutoff>
+			<cutoff>5</cutoff>
 			<evaluator>
-				<evaluatorClass>edu.lhup.ai.othello.Evaluator</evaluatorClass>
+				<evaluatorClass>Test.MyOthelloEvaluator</evaluatorClass>
 			</evaluator>
 		</player>
 	</gameFactory>

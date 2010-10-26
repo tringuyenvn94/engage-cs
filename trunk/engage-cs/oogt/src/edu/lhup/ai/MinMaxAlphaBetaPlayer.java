@@ -66,11 +66,14 @@ public class MinMaxAlphaBetaPlayer implements IPlayer
 	 * @throws StateException if the player attempts to push an invalid
 	 * move onto the games stack.
 	 */
-	public IMove takeTurn(IBoard board) throws StateException
+	public IMove takeTurn(IBoard board)
 	{
 		Logger logger = Logger.getLogger("edu.lhup.ai.MinMaxAlphaBetaPlayer");
 		logger.entering("edu.lhup.ai.MinMaxAlphaBetaPlayer", "takeTurn", 
 						"\n" + board.toString());
+		
+		System.out.println("MINMAX Start\n" + board);
+		
 		long start = System.currentTimeMillis();
 		
 		int bestRating = Integer.MIN_VALUE;
@@ -84,27 +87,49 @@ public class MinMaxAlphaBetaPlayer implements IPlayer
 			m_totalMoves++;
 
 			IMove move = (IMove)moves.get(i);
-			logger.finest("Pushing move " + move);
-			board.pushMove(move);
-			int currentRating = 
-				getRating(board, 0, Integer.MIN_VALUE, Integer.MAX_VALUE);
-			logger.finest("Rating for move " + 
-						  move + " is " + currentRating);
-			logger.finest("Poping move " + move);
-			board.popMove();
-			logger.finest("Best rating so far is " + bestRating);
-			if (currentRating > bestRating)
+			try
 			{
-				bestMove = move;
-				bestRating = currentRating;
-				logger.finest("Better rating found, new best move is " + 
-							 bestMove);
+				logger.finest("Pushing move " + board);
+				System.out.println("Pushing move \n" + board);
+				board.pushMove(move);
+				System.out.println("Board After push\n" + board);
+				int currentRating = 
+					getRating(board, 0, Integer.MIN_VALUE, Integer.MAX_VALUE);
+				logger.finest("Rating for move " + 
+							  move + " is " + currentRating);
+				logger.finest("Poping move " + move);
+				System.out.println("Poping move\n" + board);
+				board.popMove();
+				System.out.println("Board After pop\n" + board);
+				logger.finest("Best rating so far is " + bestRating);
+				if (currentRating > bestRating)
+				{
+					bestMove = move;
+					bestRating = currentRating;
+					logger.finest("Better rating found, new best move is " + 
+								 bestMove);
+				}
+			}
+			catch (StateException e)
+			{
+				System.out.println("Move failed in MinMaxPlayer");
+				System.out.println("Move = " + move);
+				System.out.println("Board \n" + board);
 			}
 		}
 		logger.finest("Best move found, board is\n" + board);
 		logger.finest("Best move is " + bestMove);
-		board.pushMove(bestMove);
-
+		try
+		{
+			board.pushMove(bestMove);
+		}
+		catch (StateException e)
+		{
+			System.out.println("Best Move failed in MinMaxPlayer");
+			System.out.println("Best Move = " + bestMove);
+			System.out.println("Board \n" + board);
+		}
+		
 		long stop = System.currentTimeMillis();
 		String totalMins = m_format.format(((stop-start)/1000.0/60.0));
 
@@ -118,6 +143,9 @@ public class MinMaxAlphaBetaPlayer implements IPlayer
 		logger.exiting("edu.lhup.ai.MinMaxAlphaBetaPlayer", "takeTurn", 
 					   "\n" + board.toString());
 		
+		System.out.println("MINMAX Stop\n" + board);
+		System.out.println("MINMAX Move " + bestMove);
+		
 		return bestMove;
 	}
 
@@ -127,7 +155,6 @@ public class MinMaxAlphaBetaPlayer implements IPlayer
 	}
 
 	protected int getRating(IBoard board, int level, int alpha, int beta) 
-		throws StateException
 	{
 		Logger logger = Logger.getLogger("edu.lhup.ai.MinMaxAlphaBetaPlayer");
 		logger.entering("edu.lhup.ai.MinMaxAlphaBetaPlayer", "getRating", 
@@ -149,38 +176,51 @@ public class MinMaxAlphaBetaPlayer implements IPlayer
 				int bestRating = Integer.MIN_VALUE;
 				List moves = new LinkedList();
 				board.moves(moves);
+				
+				System.out.println("Testing Moves on board \n" + board);
+				for (int i = 0; i < moves.size(); i++)
+					System.out.println("Move : " + moves.get(i));
+
 
 				logger.finest("Testing " + moves.size() + " moves");
 				for (int i = 0; i < moves.size(); i++)
 				{
 					m_totalMoves++;
-
 					IMove move = (IMove)moves.get(i);
-					logger.finest("Pushing move " + move);
-					board.pushMove(move);
-					int currentRating = getRating(board, level+1, alpha, beta);
-					logger.finest("Rating for move " + 
-								  move + " is " + currentRating);
-					logger.finest("Poping move " + move);
-					board.popMove();
-					logger.finest("Best rating so far is " + bestRating);
-
-					if (currentRating > bestRating)
+					try
 					{
-						bestRating = currentRating;
-						logger.finest("Better rating found, new rating is " + 
-									  bestRating);
+						logger.finest("Pushing move " + move);
+						board.pushMove(move);
+						int currentRating = getRating(board, level+1, alpha, beta);
+						logger.finest("Rating for move " + 
+									  move + " is " + currentRating);
+						logger.finest("Poping move " + move);
+						board.popMove();
+						logger.finest("Best rating so far is " + bestRating);
+	
+						if (currentRating > bestRating)
+						{
+							bestRating = currentRating;
+							logger.finest("Better rating found, new rating is " + 
+										  bestRating);
+						}
+	
+						if (currentRating >= beta)
+						{
+							logger.finest("Pruning MAX, current rating is: " + 
+										  currentRating + " beta: " + beta);
+							break;
+						}
+						
+						alpha = bestRating;
+						logger.finest("New alpha rating is " + alpha);
 					}
-
-					if (currentRating >= beta)
+					catch (StateException e)
 					{
-						logger.finest("Pruning MAX, current rating is: " + 
-									  currentRating + " beta: " + beta);
-						break;
+						System.out.println("Move failed in MinMaxPlayer");
+						System.out.println("Move = " + move);
+						System.out.println("Board \n" + board);
 					}
-					
-					alpha = bestRating;
-					logger.finest("New alpha rating is " + alpha);
 				}
 				logger.finest("Best rating " + bestRating);
 				rating = bestRating;
@@ -198,31 +238,40 @@ public class MinMaxAlphaBetaPlayer implements IPlayer
 					m_totalMoves++;
 
 					IMove move = (IMove)moves.get(i);
-					logger.finest("Pushing move " + move);
-					board.pushMove(move);
-					int currentRating = getRating(board, level+1, alpha, beta);
-					logger.finest("Rating for move " + 
-								  move + " is " + currentRating);
-					logger.finest("Poping move " + move);
-					board.popMove();
-					logger.finest("Least rating so far is " + leastRating);
-
-					if (currentRating < leastRating)
+					try
 					{
-						leastRating = currentRating;
-						logger.finest("Lesser rating found, new rating is " + 
-									 leastRating);
-					}
+						logger.finest("Pushing move " + move);
+						board.pushMove(move);
+						int currentRating = getRating(board, level+1, alpha, beta);
+						logger.finest("Rating for move " + 
+									  move + " is " + currentRating);
+						logger.finest("Poping move " + move);
+						board.popMove();
+						logger.finest("Least rating so far is " + leastRating);
+	
+						if (currentRating < leastRating)
+						{
+							leastRating = currentRating;
+							logger.finest("Lesser rating found, new rating is " + 
+										 leastRating);
+						}
+	
+						if (currentRating <= alpha)
+						{
+							logger.finest("Pruning MIN, current rating is: " + 
+										  currentRating + " alpha: " + alpha);
+							break;
+						}
 
-					if (currentRating <= alpha)
+						beta = leastRating;
+						logger.finest("New beta rating is " + beta);
+					}
+					catch (StateException e)
 					{
-						logger.finest("Pruning MIN, current rating is: " + 
-									  currentRating + " alpha: " + alpha);
-						break;
+						System.out.println("Move failed in MinMaxPlayer");
+						System.out.println("Move = " + move);
+						System.out.println("Board \n" + board);
 					}
-
-					beta = leastRating;
-					logger.finest("New beta rating is " + beta);
 				}
 				logger.finest("Least rating " + leastRating);
 				rating = leastRating;

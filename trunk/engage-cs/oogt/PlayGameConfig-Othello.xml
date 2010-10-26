@@ -7,7 +7,7 @@
 		</player>
 		<player>
 			<playerClass>edu.lhup.ai.MinMaxAlphaBetaPlayer</playerClass>
-			<cutoff>2</cutoff>
+			<cutoff>4</cutoff>
 			<evaluator>
 				<evaluatorClass>edu.lhup.ai.othello.Evaluator</evaluatorClass>
 			</evaluator>

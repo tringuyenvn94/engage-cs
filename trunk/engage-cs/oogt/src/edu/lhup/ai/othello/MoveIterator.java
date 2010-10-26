@@ -47,13 +47,9 @@ class MoveIterator implements Iterator
 		     (m_board.getState() == Board.WTURN) )
 		{
 			IPiece nextPiece = Board.bPiece();
-			Move lastMove = (Move)m_board.peekMove();
 
-			if (lastMove != null)
-			{
-				nextPiece = (lastMove.getPiece() == Board.bPiece()) ? 
-					Board.wPiece() : Board.bPiece();
-			}
+			nextPiece = (m_board.getState() == Board.WTURN) ? 
+				Board.wPiece() : Board.bPiece();
 
 			int iRowTrack = m_iCurRow;
 			int iColTrack = m_iCurCol;
@@ -72,8 +68,7 @@ class MoveIterator implements Iterator
 					if (board[iRow][iCol] == 
 						Board.emptyPiece())
 					{
-						nextMove = 
-							Board.getMove(nextPiece, iRow, iCol);
+						nextMove = new Move(nextPiece, iRow, iCol);
 						logger.finer("trying move " + nextMove);
 						logger.finer("on board\n" + m_board.toString());						
 						try
