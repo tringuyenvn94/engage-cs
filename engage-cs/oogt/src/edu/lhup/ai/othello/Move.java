@@ -2,6 +2,7 @@ package edu.lhup.ai.othello;
 
 import edu.lhup.ai.IMove;
 import edu.lhup.ai.IPiece;
+import java.util.*;
 
 /**
  * A concrete implementation of a {@link IMove move} in an othello game.  
@@ -11,7 +12,7 @@ import edu.lhup.ai.IPiece;
  * This software is for educational purposes only.
  * @author Mark Cohen 
  */
-class Move implements IMove
+public class Move implements IMove
 {
 	public Move(IPiece piece, int row, int col)
 	{
@@ -34,6 +35,13 @@ class Move implements IMove
 		return m_piece + "(" + m_iRow + ", " + m_iCol + ")";
 	}
 
+	public List<Move> getFlipped()
+	{ return m_flipped; }
+	
+	public void addFlipped(int row, int col, IPiece piece)
+	{ m_flipped.add(new Move(piece, row, col)); }
+	
+	private List<Move> m_flipped = new ArrayList<Move>();
 	private final IPiece m_piece;
 	private int m_iRow = 0;	
 	private int m_iCol = 0;	

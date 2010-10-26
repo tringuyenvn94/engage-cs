@@ -1,7 +1,10 @@
 package edu.lhup.ai.othello;
 
+
 import edu.lhup.ai.*;
 import java.util.*;
+
+import javax.print.attribute.standard.MediaSize.Other;
 
 // TODO: General issue is that, unlike tic-tac-toe, a player may have to pass a turn
 // if they can't move, the game ends if both players have to pass their turns...
@@ -14,14 +17,15 @@ import java.util.*;
  * This software is for educational purposes only.
  * @author Mark Cohen 
  */
-public class Board implements IBoard
+abstract public class Board implements IBoard
 {
-	static final int MAX_DIMENSION = 4;
-	static final int BWINS = 1;
-	static final int WWINS = 2;
-	static final int TIE = 3;
-	static final int BTURN = 4;
-	static final int WTURN = 5;
+	public static final int MAX_DIMENSION = 6;
+	public static final int BWINS = 1;
+	public static final int WWINS = 2;
+	public static final int TIE = 3;
+	public static final int BTURN = 4;
+	public static final int WTURN = 5;
+	public static final String SKIP = "-99";
 
 	private static final int THINKING = 6;
 
@@ -141,19 +145,30 @@ public class Board implements IBoard
 	public IMove pushMove(String strMove) throws StateException
 	{
 		IMove move = null;
+
 		try
 		{
 			StringTokenizer tokenizer = new StringTokenizer(strMove, ",");
-			String row = tokenizer.nextToken();
-			String col = tokenizer.nextToken();
+			String row = SKIP;
+			String col = SKIP;
 
+			// see if the player wants to skip the turn, in othello this can be required
+			// if there is no possible move, skipped moves are represented by a move 
+			// with SKIP as the value for row and col, in addition skipped moves do 
+			// not cause any action on the game board...
+			if (!strMove.toUpperCase().equals("SKIP"))
+			{
+				row = tokenizer.nextToken();
+				col = tokenizer.nextToken();
+			}
+			
 			Move lastMove = (Move)peekMove();
 			IPiece piece = (lastMove != null && 
 						    lastMove.getPiece() == bPiece()) ? wPiece() : bPiece();
 
-			move = getMove(piece, 
-						 		 Integer.parseInt(row), 
-						 		 Integer.parseInt(col));
+			move = new Move(piece,
+				 		    Integer.parseInt(row), 
+				 		    Integer.parseInt(col));
 
 			pushMove(move);
 		}
@@ -169,7 +184,6 @@ public class Board implements IBoard
 						 + strMove + 
 						 "), please use the following format: row,col");
 		}
-		
 		return move;
 	}
 
@@ -191,13 +205,30 @@ public class Board implements IBoard
 	{
 		Move othelloMove = (Move)move;
 
-		// throws an exception if move is illegal... 
-		legalMove(othelloMove);
-		
-		m_board[othelloMove.getRow()][othelloMove.getCol()] = 
-			othelloMove.getPiece();
+		// if min max has no valid move he will pass null, this should be 
+		// converted to a request to skip the turn...
+	    if (othelloMove == null)
+	    {
+			Move lastMove = (Move)peekMove();
+			IPiece piece = (lastMove != null && 
+						    lastMove.getPiece() == bPiece()) ? wPiece() : bPiece();
+	    	othelloMove = new Move(piece, Integer.parseInt(SKIP), Integer.parseInt(SKIP));
+		}
 
-		flipInAllDirections(move);
+		// see if the player wants to skip the turn, in othello this can be required
+		// if there is no possible move, skipped moves are represented by a move 
+		// with SKIP as the value for row and col, in addition skipped moves do 
+		// not cause any action on the game board...
+		if (othelloMove.getRow() != Integer.parseInt(SKIP))
+		{
+			// throws an exception if move is illegal... 
+			legalMove(othelloMove);
+	
+			m_board[othelloMove.getRow()][othelloMove.getCol()] = 
+				othelloMove.getPiece();
+	
+			flipInAllDirections(move);
+		}
 		
 		m_moveStack.addFirst(move);
 		updateState(othelloMove);
@@ -210,10 +241,19 @@ public class Board implements IBoard
 		if (m_board[othelloMove.getRow()][othelloMove.getCol()] != 
 			emptyPiece())
 		{
-			unflipInAllDirections(othelloMove);
+			// see if we are popping a skipped move, skipped moves do 
+			// not cause any action on the game board, so no action should take
+			// place when the move is popped...
+			if (othelloMove.getRow() != Integer.parseInt(SKIP))
+			{
+				unflipInAllDirections(othelloMove);
+				
+				m_board[othelloMove.getRow()][othelloMove.getCol()] = 
+					emptyPiece();
+			}
 			
-			m_board[othelloMove.getRow()][othelloMove.getCol()] = 
-				emptyPiece();
+			System.out.println("After POP " + othelloMove);
+			System.out.println(this);
 			
 			updateState(othelloMove);
 		}
@@ -281,9 +321,9 @@ public class Board implements IBoard
 		{
 			for (int col = 0; col < MAX_DIMENSION; col++)
 			{
-				out.append(m_board[row][col].toString());
+				out.append(m_board[row][col].toString() +"\t");
 			}
-			out.append(System.getProperty("line.separator"));
+			out.append(System.getProperty("line.separator")+"\n");
 		}
 		return out.toString();
 	}
@@ -326,6 +366,8 @@ public class Board implements IBoard
 		return result;
 	}
 
+	// throws an exception if, for some reason, the specified move
+	// is not legal for the the current player...
 	public void legalMove(IMove move) throws StateException
 	{
 		Move othelloMove = (Move)move;
@@ -346,7 +388,7 @@ public class Board implements IBoard
 		if (m_moveStack.size() > 0)
 		{
 			Move lastMove = (Move)peekMove();
-			if (lastMove.getPiece() == othelloMove.getPiece())
+			if (lastMove != null && lastMove.getPiece() == othelloMove.getPiece())
 			{
 				throw new StateException
 					("Illegal move, same player cannot make two moves " + 
@@ -361,25 +403,7 @@ public class Board implements IBoard
 									 ", the square is already occupied");
 		}
 
-		boolean bLegal = false;
-
-		if (!bLegal)
-			bLegal = legalMove(m_zero, m_right, othelloMove);
-		if (!bLegal)
-			bLegal = legalMove(m_zero, m_left, othelloMove);
-		if (!bLegal)
-			bLegal = legalMove(m_up, m_zero, othelloMove);
-		if (!bLegal)
-			bLegal = legalMove(m_down, m_zero, othelloMove);
-		if (!bLegal)
-			bLegal = legalMove(m_up, m_left, othelloMove);
-		if (!bLegal)
-			bLegal = legalMove(m_down, m_left, othelloMove);
-		if (!bLegal)
-			bLegal = legalMove(m_up, m_right, othelloMove);
-		if (!bLegal)
-			bLegal = legalMove(m_down, m_right, othelloMove);
-		
+		boolean bLegal = isLegalMove(othelloMove);
 		if (!bLegal)
 		{
 			throw new StateException("Illegal move " + move + 
@@ -387,37 +411,37 @@ public class Board implements IBoard
 		}
 	}
 	
+	// counts the number of pieces on the board that are 
+	// similar to the specified piece...   		
+	int countPieces(IPiece p)
+	{
+		int iRet = 0;
+		for (int row = 0; row < MAX_DIMENSION; row++)
+		{
+			for (int col = 0; col < MAX_DIMENSION; col++)
+			{
+				if (m_board[row][col] == p)
+					iRet++;
+			}
+		}
+		return iRet;
+	}
+	
 //---------------
 
-	static IPiece emptyPiece()
+	public static IPiece emptyPiece()
 	{ return m_emptyPiece; }
 
-	static IPiece bPiece()
+	public static IPiece bPiece()
 	{ return m_bPiece; }
 
-	static IPiece wPiece()
+	public static IPiece wPiece()
 	{ return m_wPiece; }
 
 	static StringBuffer createStringBuffer()
 	{ 
 		m_buffer.setLength(0);
 		return m_buffer;
-	}
-
-	static Move getMove(IPiece piece, int row, int col)
-	{ 
-		Move move = null;
-		String strKey = piece.toString() + row + col;
-		if (m_moveMap.containsKey(strKey))
-		{
-			move = (Move)m_moveMap.get(strKey);
-		}
-		else
-		{
-			move = new Move(piece, row, col);
-			m_moveMap.put(strKey, move);
-		}
-		return move;
 	}
 
 //---------------
@@ -427,23 +451,51 @@ public class Board implements IBoard
 		// if there are no pieces, we are in the starting state...
 		m_state = (m_moveStack.size() == 0) ? BTURN : THINKING;
 
-		// game is over when there are no more legal moves...
+		// game is over when there are no more legal moves for anyone,
+		// not just the current player...
 		if (m_state == THINKING)
 		{
-			// TODO: That do I do in this state???
-			/*
-			for (int row = 0; row < MAX_DIMENSION; row++)
+			Move m = null;
+			boolean bSuccess = false;
+			for (int row = 0; row < MAX_DIMENSION && !bSuccess; row++)
 			{
-				for (int col = 0; col < MAX_DIMENSION; col++)
+				for (int col = 0; col < MAX_DIMENSION && !bSuccess; col++)
 				{
 					if (m_board[row][col] == emptyPiece())
-						break;
+					{
+						m = new Move(m_bPiece, row, col);
+						bSuccess = isLegalMove(m);
+						if (!bSuccess)
+						{
+							m = new Move(m_wPiece, row, col);
+							bSuccess = isLegalMove(m);
+						}
+					}
 				}
 			}
-			*/
+			
+			// we found a legal move for one of the players so allow
+			// the game to continue
+			if (bSuccess)
+			{
+				m_state = THINKING;
+			}
+			else
+			{
+				// no legal moves for either player, so count the pieces and
+				// and determine who wins!...
+				int bcnt = countPieces(m_bPiece);
+				int wcnt = countPieces(m_wPiece);
+				if (bcnt == wcnt)
+					m_state = TIE;
+				else if (bcnt > wcnt)
+					m_state = BWINS;
+				else 
+					m_state = WWINS;
+			}
 		}
 
-		// if nobody has one, and it is not a tie, determine who goes next...
+		// if nobody has won, and it is not a tie, determine who goes next...
 		if (m_state == THINKING)
 		{
 			m_state = (move.getPiece() == bPiece()) ? WTURN : BTURN;
@@ -467,54 +519,8 @@ public class Board implements IBoard
 		m_board[loc+1][loc+1] = Board.bPiece();
 	}
 
-	private IPlayer createPlayer(String strPlayer) throws StateException
-	{
-		try
-		{
-			Class cls = Class.forName(strPlayer);
-			return (IPlayer)cls.newInstance();
-		}
-		catch (InstantiationException e)
-		{
-			throw new StateException("Illegal Player: " + strPlayer, e);
-		}
-		catch (IllegalAccessException e)
-		{
-			throw new StateException("Illegal Player: " + strPlayer, e);
-		}
-		catch (ClassNotFoundException e)
-		{
-			throw new StateException("Illegal Player: " + strPlayer, e);
-		}
-	}
-
-	private boolean legalMove(IDelta dRow, IDelta dCol, Move move)
-	{
-		boolean bMiddleFound = false;
-		boolean bTerminalFound = false;
-		IPiece opposingPiece = 
-			(move.getPiece() == Board.bPiece()) ? Board.wPiece() : Board.bPiece(); 
-		
-		int row = dRow.delta(move.getRow());
-		int col = dCol.delta(move.getCol());
-		
-		while (row != IDelta.LIMIT && col != IDelta.LIMIT && !bTerminalFound)
-		{
-			if (m_board[row][col] == emptyPiece())
-				break;
-			
-			if (m_board[row][col] == opposingPiece)
-				bMiddleFound = true;
-			
-			if (m_board[row][col] == move.getPiece())
-				bTerminalFound = true;
-			
-			row = dRow.delta(row);
-			col = dCol.delta(col);
-		}
-		return (bMiddleFound && bTerminalFound);
-	}
-	
+	// this method flips the pieces surrounded by the specified move, 
+	// flips take place in all directions that have surrounded pieces...
 	private void flipInAllDirections(IMove move)
 	{
 		System.out.println("Before Flip " + move);
@@ -551,27 +557,49 @@ public class Board implements IBoard
 		
 	}
 
+	// this method unflips pieces that were flipped by the specified move, 
+	// flips are recorded in the move so they are easy to undo...
 	private void unflipInAllDirections(IMove move)
 	{
-		// TODO: and unflip in all direction code... 
+		System.out.println("Before UnFlip " + move);
+		System.out.println(this);
+		
+		Move othelloMove = (Move)move;
+		
+		// just unflip the pieces that were recorded as flipped 
+		// when the the move was enacted...
+		for (Move m : othelloMove.getFlipped())
+		{
+			System.out.println("Flipping row " + m.getRow() + " col " + m.getCol());
+			m_board[m.getRow()][m.getCol()] = move.getPiece() == m_bPiece ? m_wPiece : m_bPiece;
+		}
+		
+		System.out.println("After UnFlip " + move);
+		System.out.println(this);
 	}
 
+	// flips pieces from a move along a specified axis...
 	private void flip(IDelta dRow, IDelta dCol, Move move)
 	{
 		int row = dRow.delta(move.getRow());
 		int col = dCol.delta(move.getCol());		
 		
 		while (row != IDelta.LIMIT -1 && col != IDelta.LIMIT && 
-			   shuoldFlip(dRow, dCol,(Move)move) && 
+			   shouldFlip(dRow, dCol,(Move)move) && 
 			   !isFlipTerminalPiece(row, col, move.getPiece())) 
 		{
+			System.out.println("Flipping row " + row + " col " + col);
+			move.addFlipped(row, col, move.getPiece());
 			m_board[row][col] = move.getPiece();
 			col = dCol.delta(col);
 			row = dRow.delta(row);
 		}
 	}
 
-	private boolean shuoldFlip(IDelta dRow, IDelta dCol, Move move)
+	// determines if a flip can take place along a specified axis
+	// from the specified move, flips can only take place if the move
+	// surrounds opponent pieces...
+	private boolean shouldFlip(IDelta dRow, IDelta dCol, Move move)
 	{
 		boolean bRet = false;
 		int col = dCol.delta(move.getCol());
@@ -598,7 +626,10 @@ public class Board implements IBoard
 		
 		return bRet;
 	}
-	
+
+	// this method returns when to terminate when checking along an axis
+	// to see if we can flip, empty pieces or similar pieces terminate 
+	// the search... 
 	private boolean isFlipTerminalPiece(int row, int col, IPiece piece)
 	{
 		if (m_board[row][col] == m_emptyPiece)
@@ -609,21 +640,7 @@ public class Board implements IBoard
 			return false;
 	}
 
-	private boolean isNextPieceTerminal(int row, int col, IPiece piece)
-	{
-		if (col >= MAX_DIMENSION) 
-			return true;
-		else if (row >= MAX_DIMENSION)
-			return true;
-		else if (col < 0)
-			return true;
-		else if (row < 0)
-			return true;
-		else if (m_board[row][col] != piece)
-			return true;
-		else
-			return false;
-	}
+	abstract protected boolean isLegalMove(Move othelloMove);
 
 	private IDelta m_left = new DeltaLeft(0, MAX_DIMENSION-1);
 	private IDelta m_right = new DeltaRight(0, MAX_DIMENSION-1);
@@ -641,5 +658,4 @@ public class Board implements IBoard
 	private static final IPiece m_wPiece = new WPiece();
 	private static final IPiece m_emptyPiece = new EmptyPiece();
 	private static final HashMap m_moveMap = new HashMap();
-	
 }
