@@ -1,7 +1,10 @@
-package ga;
+package ga.concrete;
 
 
-import ga.concrete.ChromosomeComparator;
+import ga.IChromosome;
+import ga.IFitness;
+import ga.IPopulation;
+import ga.ISelection;
 
 import java.util.Collections;
 import java.util.List;
