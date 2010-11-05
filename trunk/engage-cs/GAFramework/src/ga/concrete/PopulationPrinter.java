@@ -1,4 +1,9 @@
-package ga;
+package ga.concrete;
+
+import ga.IChromosome;
+import ga.IFitness;
+import ga.IPopulation;
+import ga.IPopulationDisplay;
 
 
 public class PopulationPrinter<Type> implements IPopulationDisplay<Type>
