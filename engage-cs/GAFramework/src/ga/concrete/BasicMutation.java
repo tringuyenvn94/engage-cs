@@ -1,4 +1,8 @@
-package ga;
+package ga.concrete;
+
+import ga.IChromosome;
+import ga.IMutation;
+import ga.IPopulation;
 
 import java.util.Random;
 

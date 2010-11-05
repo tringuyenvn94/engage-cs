@@ -1,42 +1,49 @@
-import java.util.Collections;
-
-import ga.BasicMutation;
-import ga.BasicPopulation;
-import ga.BooleanChromosome;
-import ga.ChromosomeComparator;
-import ga.GeneticAlgorithm;
-import ga.IChromosome;
-import ga.ICrossover;
-import ga.IFitness;
-import ga.IMutation;
-import ga.IPopulation;
-import ga.IPopulationDisplay;
-import ga.ISelection;
-import ga.PopulationPrinter;
-import ga.RouletteWheelSelection;
-import ga.SinglePointCrossover;
 import XSquared.XSquaredFitness;
+import ga.*;
+import ga.concrete.*;
 
 public class Main
 {
     public static void main(String[] args)
     {
+    	// what problem shall we solve ?
+    	IFitness<Boolean> fit = new XSquaredFitness<Boolean>();
+
+    	// what chromosome should we use?
+    	IChromosome<Boolean> proto = new BooleanChromosome(8);
+        
+    	// how should we sort the chromosomes?
+    	ChromosomeComparator<Boolean> comp = new ChromosomeComparator<Boolean>(fit);        
+
+        // how shall we display the population>
         IPopulationDisplay<Boolean> disp = new PopulationPrinter<Boolean>();
-        IFitness<Boolean> fit = new XSquaredFitness<Boolean>();
-        IChromosome<Boolean> proto = new BooleanChromosome(5);
+
+        // how shall we represent the population?
         IPopulation<Boolean> pop = new BasicPopulation<Boolean>();
-        ISelection<Boolean> sel = 
-            new RouletteWheelSelection<Boolean>();
-        ICrossover<Boolean> cross = 
-            new SinglePointCrossover<Boolean>();
+        
+        // what natural selection algorithm should we use?
+        ISelection<Boolean> sel =  new RouletteWheelSelection<Boolean>();
+        
+        // what crossover method should we use?        
+        ICrossover<Boolean> cross = new SinglePointCrossover<Boolean>();
+        
+        // what mutation method should we use?
         IMutation<Boolean> mut = new BasicMutation<Boolean>();
         
+        // who do we know we are done?
+        IConvergenceTest<Boolean> conv = new TopNTheSame<Boolean>();
+
+        // set some parameters....
+        cross.setCrossoverRate(0.80);
+        mut.setMutationRate(0.01);
+        
+        // create the top-level algorithm
         GeneticAlgorithm<Boolean> ga = new GeneticAlgorithm<Boolean>();
-        ga.run(disp, fit, proto, pop, sel,cross, mut);
         
-        Collections.sort(pop.getIndividuals(), 
-                new ChromosomeComparator<Boolean>(fit));
+        // run the algorithm...
+        pop = ga.run(disp, fit, proto, pop, sel,cross, mut, comp, conv);
         
+        // print the best fit individual -- the solution!
         System.out.println(pop.getIndividuals().get(0));
     }
 

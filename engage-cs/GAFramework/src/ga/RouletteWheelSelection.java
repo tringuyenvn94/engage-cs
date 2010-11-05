@@ -1,6 +1,8 @@
 package ga;
 
 
+import ga.concrete.ChromosomeComparator;
+
 import java.util.Collections;
 import java.util.List;
 import java.util.Random;
@@ -32,12 +34,13 @@ public class RouletteWheelSelection<Type> implements ISelection<Type>
                 slice += ifit;
                 if (num < slice)
                 {
-                    newPop.addIndividual(c);
+                	IChromosome<Type> copy = c.copy();
+                    newPop.addIndividual(copy);
                     break;
                 }
             }
         }
+        
         return newPop;
     }
-
 }
