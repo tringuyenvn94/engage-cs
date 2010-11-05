@@ -7,7 +7,7 @@ public class Main
     public static void main(String[] args)
     {
     	// what problem shall we solve ?
-    	IFitness fit = new XSquaredFitness();
+    	IFitness<Boolean> fit = new XSquaredFitness();
 
     	// what chromosome should we use?
     	IChromosome<Boolean> proto = new BooleanChromosome(8);
