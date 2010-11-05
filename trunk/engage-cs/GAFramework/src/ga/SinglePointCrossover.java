@@ -1,6 +1,5 @@
 package ga;
 
-import java.util.List;
 import java.util.Random;
 
 public class SinglePointCrossover<Type> implements ICrossover<Type>
@@ -15,8 +14,6 @@ public class SinglePointCrossover<Type> implements ICrossover<Type>
 
     public IPopulation<Type> crossover(IPopulation<Type> pop)
     {
-        List<IChromosome<Type>> l = pop.getIndividuals();
-        
         IPopulation<Type> newPop = pop.create();
         
         for (int i = 0; i < (pop.getSize()/2); i++)

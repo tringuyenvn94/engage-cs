@@ -1,4 +1,6 @@
-package ga;
+package ga.concrete;
+
+import ga.IChromosome;
 
 public class BooleanChromosome implements IChromosome<Boolean>
 {

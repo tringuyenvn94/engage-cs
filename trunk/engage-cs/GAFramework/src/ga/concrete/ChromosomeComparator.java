@@ -1,4 +1,7 @@
-package ga;
+package ga.concrete;
+import ga.IChromosome;
+import ga.IFitness;
+
 import java.util.Comparator;
 
 

@@ -1,4 +1,7 @@
-package ga;
+package ga.concrete;
+
+import ga.IChromosome;
+import ga.IPopulation;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -31,21 +34,6 @@ public class BasicPopulation<Type> implements IPopulation<Type>
         m_people.add(ind);        
     }
 
-    public boolean hasConverged(IFitness<Type> fit)
-    {
-        double max = Double.MIN_VALUE;
-        double min = Double.MAX_VALUE;
-        for (IChromosome<Type> c : m_people)
-        {
-            double f = fit.fitness(c);
-            if (f > max)
-                max = f;
-            if (f < min)
-                min = f;
-        }
-        return (max-min) < (max * 0.1);
-    }
-    
     public IPopulation<Type> create()
     {
         return new BasicPopulation<Type>();
